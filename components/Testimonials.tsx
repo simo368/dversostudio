@@ -44,12 +44,14 @@ export default function Testimonials() {
     if (reduce) return () => s.revert();
     busy.current?.kill();
     // First entrance is scroll-triggered; later changes play immediately (and replace any running one).
-    const st = isFirst ? { trigger: el, start: "top 84%", once: true } : undefined;
+    const st = isFirst ? { trigger: el, start: "top 86%", once: true } : undefined;
     busy.current = gsap
       .timeline({ scrollTrigger: st })
-      .from(s.lines, { yPercent: 110, duration: 1.1, ease: EASE.expo, stagger: 0.1 })
-      .from(".t-meta", { opacity: 0, y: 12, duration: 0.7, ease: EASE.out, stagger: 0.07 }, "-=0.8")
-      .fromTo(".t-bar", { scaleX: 0 }, { scaleX: 1, duration: 1, ease: EASE.signature }, "-=0.9");
+      .from(".quote-mark", { opacity: 0, y: 18, duration: 0.7, ease: EASE.expo }, 0)
+      .from(s.lines, { yPercent: 112, duration: 1.15, ease: EASE.expo, stagger: 0.1 }, 0.1)
+      .from(".testimonial-note", { opacity: 0, y: 14, duration: 0.8, ease: EASE.out }, "-=0.7")
+      .from(".testimonial-attribution > span, .t-count", { opacity: 0, y: 10, duration: 0.65, ease: EASE.out, stagger: 0.08 }, "-=0.55")
+      .fromTo(".t-bar", { scaleX: 0 }, { scaleX: 1, duration: 1.1, ease: EASE.signature }, "-=0.7");
     return () => { busy.current?.scrollTrigger?.kill(); busy.current?.kill(); s.revert(); };
   }, [index]);
 

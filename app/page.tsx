@@ -164,7 +164,7 @@ export default function Home() {
         <div className="cta-image image-reveal" data-cursor="view" data-cursor-label="VIEW"><img src={editorialImages.cta} alt="Minimal still life in a warm creative studio" loading="lazy" decoding="async" /></div>
         <div className="cta-copy">
           <p className="eyebrow serif-italic" data-reveal-lines>The beginning of something distinct</p>
-          <h2 data-reveal-words>Ready to<br /><em>get started?</em></h2>
+          <h2 data-cta-heading>Ready to<br /><em>get started?</em></h2>
           <p data-reveal-lines>Have a good idea, a big ambition or a brand ready for its next chapter? We would love to hear about it.</p>
           <a className="cta-button" href="#contact" data-magnetic>
             <span className="cta-button-fill" aria-hidden="true" />

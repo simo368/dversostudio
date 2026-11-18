@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { gsap, registerGsap, EASE, SplitText, getLenis } from "@/lib/motion";
+import { gsap, registerGsap, EASE, SplitText, getLenis, scrollToTarget } from "@/lib/motion";
 
 const ITEMS = [
   { n: "01", label: "Home", href: "#top", img: "photo-1490481651871-ab68de25d43d" },
@@ -17,16 +17,20 @@ function Roll({ children }: { children: string }) {
 
 /**
  * Header + full-screen menu.
- * Choreography: open = overlay wipe (lead) → big words rise (support, varied stagger) → secondary info.
+ * Choreography: open = overlay wipe (lead) → preview frame & big words rise (support, varied stagger) → secondary info.
  * Close = everything leaves together and fast (exits are simultaneous and shorter than entrances).
+ * Touch: tapping an item emphasizes it and crossfades the contextual preview briefly before closing + scrolling.
  */
 export default function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [armed, setArmed] = useState(false);
+  const [active, setActive] = useState<number | null>(null);
   const overlay = useRef<HTMLDivElement>(null);
   const tl = useRef<gsap.core.Timeline | null>(null);
   const fab = useRef<HTMLButtonElement>(null);
   const splits = useRef<SplitText[]>([]);
+  const pointerKind = useRef<string>("mouse");
+  const navTimer = useRef<number | null>(null);
 
   /* Build the open timeline once; close just reverses it faster. */
   useEffect(() => {
@@ -51,15 +55,17 @@ export default function SiteHeader() {
           onReverseComplete: () => { gsap.set(el, { visibility: "hidden" }); },
         })
         .set(el, { visibility: "visible" })
-        .to(el, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.95 })
-        .to(".menu-previews", { clipPath: "inset(0% 0% 0% 0%)", duration: 1.2, ease: EASE.signature }, "-=0.6")
+        .to(el, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.72 })
+        .to(".menu-close", { opacity: 1, y: 0, duration: 0.45, ease: EASE.out }, 0.22)
+        .to(".menu-previews", { clipPath: "inset(0% 0% 0% 0%)", duration: 0.85, ease: EASE.signature }, 0.18)
         // Varied stagger: first items lead, later ones follow faster (non-metronomic).
-        .to(chars.flat(), { yPercent: 0, duration: 1.0, ease: EASE.expo, stagger: { each: 0.018, ease: "power2.out", amount: 0.55 } }, "-=0.45")
-        .to(".menu-line", { scaleX: 1, duration: 0.9, stagger: 0.07 }, "<0.05")
-        .to(".menu-num", { opacity: 1, y: 0, duration: 0.6, ease: EASE.out, stagger: 0.07 }, "<0.1")
-        .to(".menu-secondary > *, .menu-close", { opacity: 1, y: 0, duration: 0.6, ease: EASE.out, stagger: 0.06 }, "-=0.35");
+        .to(chars.flat(), { yPercent: 0, duration: 0.78, ease: EASE.expo, stagger: { each: 0.014, ease: "power2.out", amount: 0.35 } }, 0.24)
+        .to(".menu-line", { scaleX: 1, duration: 0.65, stagger: 0.05 }, 0.28)
+        .to(".menu-num", { opacity: 1, y: 0, duration: 0.45, ease: EASE.out, stagger: 0.05 }, 0.32)
+        .to(".menu-secondary > *", { opacity: 1, y: 0, duration: 0.45, ease: EASE.out, stagger: 0.045 }, 0.52);
     }, el);
     return () => {
+      if (navTimer.current) window.clearTimeout(navTimer.current);
       tl.current?.kill();
       splits.current.forEach((s) => s.revert());
       ctx.revert();
@@ -68,6 +74,8 @@ export default function SiteHeader() {
 
   const openMenu = useCallback(() => {
     if (!tl.current) return;
+    if (navTimer.current) { window.clearTimeout(navTimer.current); navTimer.current = null; }
+    setActive(null);
     setOpen(true);
     setArmed(true); // preview images are only requested once the menu is first opened
     getLenis()?.stop();
@@ -76,10 +84,31 @@ export default function SiteHeader() {
 
   const closeMenu = useCallback(() => {
     if (!tl.current) return;
+    if (navTimer.current) { window.clearTimeout(navTimer.current); navTimer.current = null; }
     setOpen(false);
+    setActive(null);
     tl.current.timeScale(1.8).reverse(); // simultaneous + faster exit
     getLenis()?.start();
   }, []);
+
+  const handleItemClick = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>, index: number, href: string) => {
+      e.preventDefault();
+      const target = href === "#top" ? 0 : document.querySelector<HTMLElement>(href);
+      if (pointerKind.current !== "mouse") {
+        setActive(index);
+        if (navTimer.current) window.clearTimeout(navTimer.current);
+        navTimer.current = window.setTimeout(() => {
+          closeMenu();
+          if (target !== null) scrollToTarget(target as number | HTMLElement);
+        }, 260);
+      } else {
+        closeMenu();
+        if (target !== null) scrollToTarget(target as number | HTMLElement);
+      }
+    },
+    [closeMenu]
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closeMenu(); };
@@ -95,8 +124,7 @@ export default function SiteHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  /* Hover: expand active word, dim the others, swap the preview image. */
-  const [active, setActive] = useState<number | null>(null);
+  const previewItem = ITEMS[active ?? 0];
 
   return (
     <>
@@ -138,11 +166,12 @@ export default function SiteHeader() {
                 key={item.n}
                 href={item.href}
                 className={`menu-item${active === i ? " is-active" : ""}`}
-                onClick={closeMenu}
-                onMouseEnter={() => setActive(i)}
-                onFocus={() => setActive(i)}
-                onMouseLeave={() => setActive(null)}
-                onBlur={() => setActive(null)}
+                onPointerDown={(e) => { pointerKind.current = e.pointerType || "mouse"; }}
+                onClick={(e) => handleItemClick(e, i, item.href)}
+                onPointerEnter={(e) => { if (e.pointerType === "mouse") setActive(i); }}
+                onFocus={() => { if (pointerKind.current === "mouse") setActive(i); }}
+                onPointerLeave={(e) => { if (e.pointerType === "mouse") setActive(null); }}
+                onBlur={() => { if (pointerKind.current === "mouse") setActive(null); }}
               >
                 <span className="menu-num">{item.n}</span>
                 <span className="menu-word">{item.label}</span>
@@ -159,6 +188,7 @@ export default function SiteHeader() {
                 style={armed ? { backgroundImage: `url(https://images.unsplash.com/${item.img}?auto=format&fit=crop&w=900&q=70)` } : undefined}
               />
             ))}
+            <span className="menu-preview-tag">{previewItem.n} — {previewItem.label.toUpperCase()}</span>
           </div>
         </div>
 
