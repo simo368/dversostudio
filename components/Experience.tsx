@@ -131,18 +131,11 @@ export default function Experience() {
 
         /* ---------- HERO: continuous exit + pointer/scroll depth ---------- */
         const heroExit = gsap.timeline({ scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true } });
-        if (desktop) {
-          heroExit
-            .to(".hero-image", { yPercent: 8, ease: "none" }, 0)
-            .to(".hero-content", { y: -90, opacity: 0.1, ease: "none" }, 0)
-            .to(".hero-index", { opacity: 0, ease: "none" }, 0);
-        } else {
-          heroExit
-            .to(".hero-image", { yPercent: 9, scale: 1.03, ease: "none" }, 0)
-            .to(".hero-title", { scale: 0.91, ease: "none" }, 0)
-            .to(".hero-content", { y: -52, opacity: 0.08, ease: "none" }, 0)
-            .to(".hero-index, .scroll-cue", { opacity: 0, ease: "none" }, 0);
-        }
+        heroExit
+          .to(".hero-image", { yPercent: 8, scale: 1.03, ease: "none" }, 0)
+          .to(".hero-content", { y: desktop ? -90 : -70, opacity: 0.1, ease: "none" }, 0)
+          .to(".hero-index, .scroll-cue", { opacity: 0, ease: "none" }, 0);
+        if (!desktop) heroExit.to(".hero-title", { scale: 0.92, ease: "none" }, 0);
 
         if (fine) {
           const ix = gsap.quickTo(".hero-image", "x", { duration: 1.4, ease: "power3.out" });
@@ -216,8 +209,8 @@ export default function Experience() {
             scrollTrigger: { trigger: el, start: "top 84%", once: true },
           });
           if (img) {
-            gsap.fromTo(img, { scale: 1.4, yPercent: desktop ? -7 : -4 }, {
-              scale: 1.14, yPercent: desktop ? 7 : 4, ease: "none",
+            gsap.fromTo(img, { scale: 1.4, yPercent: -7 }, {
+              scale: 1.14, yPercent: 7, ease: "none",
               scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: 0.5 },
             });
           }
@@ -225,7 +218,7 @@ export default function Experience() {
 
         /* ---------- STATEMENT: exit ---------- */
         gsap.to(".statement-inner", {
-          y: desktop ? -60 : -36, scale: 0.96, opacity: 0.15, ease: "none",
+          y: -60, scale: 0.96, opacity: 0.15, ease: "none",
           scrollTrigger: { trigger: ".statement", start: "bottom 70%", end: "bottom 5%", scrub: true },
         });
 
@@ -267,8 +260,8 @@ export default function Experience() {
               tl.fromTo(mediaImg, { scale: 1.24 }, { scale: 1, duration: 1.4, delay: i * 0.12, ease: EASE.expo, clearProps: "transform" }, 0);
             }
           });
-          // Differential vertical parallax (center dominates, flanks lag for depth)
-          const mobileSpeeds: Record<string, number> = { ".phone-left": -4, ".phone-center": -12, ".phone-right": -6 };
+          // Differential vertical parallax — full desktop depth on mobile too
+          const mobileSpeeds: Record<string, number> = { ".phone-left": -7, ".phone-center": -15, ".phone-right": -4 };
           Object.entries(mobileSpeeds).forEach(([sel, yp]) => {
             gsap.to(sel, {
               yPercent: yp, ease: "none",
@@ -301,7 +294,7 @@ export default function Experience() {
         gsap.from(".note-left", { x: -34, opacity: 0, duration: 1.2, ease: EASE.expo, scrollTrigger: { trigger: ".social-stage", start: "top 78%", once: true } });
         gsap.from(".note-right", { x: 34, opacity: 0, duration: 1.2, ease: EASE.expo, delay: 0.15, scrollTrigger: { trigger: ".social-stage", start: "top 78%", once: true } });
 
-        /* ---------- PORTFOLIO: pinned horizontal story (desktop) / depth swipe stage (mobile) ---------- */
+        /* ---------- PORTFOLIO: pinned horizontal story (desktop + mobile) ---------- */
         const vp = document.querySelector<HTMLElement>(".project-viewport");
         const track = document.querySelector<HTMLElement>(".project-grid");
         const barEl = document.querySelector<HTMLElement>(".project-progress-bar");
@@ -311,157 +304,46 @@ export default function Experience() {
         const setProgress = (p: number) => {
           if (barEl) barEl.style.transform = `scaleX(${p})`;
           if (countEl) countEl.textContent = `${String(Math.round(p * (N - 1)) + 1).padStart(2, "0")} / ${String(N).padStart(2, "0")}`;
+          if (!fine && panels.length) {
+            const active = Math.min(N - 1, Math.max(0, Math.round(p * (N - 1))));
+            panels.forEach((panel, idx) => panel.classList.toggle("is-active", idx === active));
+          }
         };
 
         if (vp && track && panels.length) {
-          if (desktop) {
-            const reveal = (panel: HTMLElement) =>
-              gsap.timeline({ paused: true })
-                .fromTo(panel.querySelector(".project-image"), { clipPath: "inset(100% 0% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 1.5, ease: EASE.signature }, 0)
-                .fromTo(panel.querySelector(".project-info"), { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 1, ease: EASE.expo }, 0.55);
+          const reveal = (panel: HTMLElement) =>
+            gsap.timeline({ paused: true })
+              .fromTo(panel.querySelector(".project-image"), { clipPath: "inset(100% 0% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 1.5, ease: EASE.signature }, 0)
+              .fromTo(panel.querySelector(".project-info"), { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 1, ease: EASE.expo }, 0.55);
 
-            panels.forEach((p) => {
-              gsap.set(p.querySelector(".project-image"), { clipPath: "inset(100% 0% 0% 0%)" });
-              gsap.set(p.querySelector(".project-info"), { opacity: 0 });
-            });
+          panels.forEach((p) => {
+            gsap.set(p.querySelector(".project-image"), { clipPath: "inset(100% 0% 0% 0%)" });
+            gsap.set(p.querySelector(".project-info"), { opacity: 0 });
+          });
 
-            const dist = () => Math.max(0, track.scrollWidth - vp.clientWidth);
-            const h = gsap.to(track, {
-              x: () => -dist(), ease: "none",
-              scrollTrigger: {
-                trigger: vp, pin: true, scrub: true, start: "top top",
-                end: () => "+=" + dist(), invalidateOnRefresh: true, anticipatePin: 1,
-                onUpdate: (self) => setProgress(self.progress),
-              },
-            });
-            panels.forEach((p, i) => {
-              const t = reveal(p);
-              if (i < 2) ScrollTrigger.create({ trigger: vp, start: "top 72%", once: true, onEnter: () => t.play() });
-              else ScrollTrigger.create({ trigger: p, containerAnimation: h, start: "left 94%", once: true, onEnter: () => t.play() });
-              const img = p.querySelector("img");
-              if (img) {
-                gsap.fromTo(img, { scale: 1.3 }, {
-                  scale: 1.04, ease: "none",
-                  scrollTrigger: { trigger: p, containerAnimation: h, start: "left 100%", end: "left 35%", scrub: true },
-                });
-              }
-            });
-            setProgress(0);
-          } else {
-            // Mobile: scenographic per-card reveal + continuous swipe depth & internal image parallax.
-            const revealMobile = (panel: HTMLElement) => {
-              const box = panel.querySelector(".project-image");
-              const img = panel.querySelector("img");
-              const num = panel.querySelector(".project-number");
-              const title = panel.querySelector(".project-info h3");
-              const cat = panel.querySelector(".project-info p");
-              const arrow = panel.querySelector(".project-info .arrow-circle");
-              return gsap.timeline({ paused: true })
-                .fromTo(box, { clipPath: "inset(100% 0% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 1.45, ease: EASE.signature }, 0)
-                .fromTo(img, { scale: 1.28 }, { scale: 1.06, duration: 1.55, ease: EASE.expo }, 0)
-                .fromTo(num, { y: 14, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: EASE.expo }, 0.35)
-                .fromTo(title, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.9, ease: EASE.expo }, 0.48)
-                .fromTo(cat, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.75, ease: EASE.out }, 0.6)
-                .fromTo(arrow, { scale: 0.72, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.75, ease: EASE.expo }, 0.62);
-            };
-
-            panels.forEach((p) => {
-              gsap.set(p.querySelector(".project-image"), { clipPath: "inset(100% 0% 0% 0%)" });
-              gsap.set(p.querySelectorAll(".project-number, .project-info h3, .project-info p, .project-info .arrow-circle"), { opacity: 0 });
-            });
-
-            const timelines = panels.map((p) => revealMobile(p));
-            const played = new Set<number>();
-            const playPanel = (i: number) => {
-              if (played.has(i)) return;
-              played.add(i);
-              timelines[i].play();
-            };
-
-            let inView = false;
-            const io = new IntersectionObserver(
-              (entries) => {
-                entries.forEach((entry) => {
-                  if (!entry.isIntersecting) return;
-                  const idx = panels.indexOf(entry.target as HTMLElement);
-                  if (idx !== -1 && inView) playPanel(idx);
-                });
-              },
-              { root: track, threshold: 0.12 }
-            );
-            panels.forEach((p) => io.observe(p));
-            cleanups.push(() => io.disconnect());
-
-            ScrollTrigger.create({
-              trigger: track,
-              start: "top 86%",
-              once: true,
-              onEnter: () => {
-                inView = true;
-                playPanel(0);
-                playPanel(1);
-              },
-            });
-
-            // Vertical scroll parallax on the portfolio stage (never traps vertical scroll)
-            gsap.to(".project-grid", {
-              y: -18, ease: "none",
-              scrollTrigger: { trigger: vp, start: "top bottom", end: "bottom top", scrub: 0.5 },
-            });
-
-            let rafId = 0;
-            const updateSwipeDepth = () => {
-              rafId = 0;
-              const max = track.scrollWidth - track.clientWidth;
-              setProgress(max > 0 ? Math.min(1, Math.max(0, track.scrollLeft / max)) : 0);
-              const viewCenter = track.scrollLeft + track.clientWidth / 2;
-              const span = Math.max(1, track.clientWidth * 0.85);
-              let best = 0;
-              let bestDist = Infinity;
-
-              panels.forEach((p, idx) => {
-                const cardCenter = p.offsetLeft + p.offsetWidth / 2;
-                const rawDelta = cardCenter - viewCenter;
-                const absDelta = Math.abs(rawDelta);
-                if (absDelta < bestDist) { bestDist = absDelta; best = idx; }
-
-                // Normalized [-1, 1] offset from viewport center
-                const d = Math.max(-1, Math.min(1, rawDelta / span));
-                const ad = Math.abs(d);
-                p.style.transform = `scale(${(1 - 0.065 * ad).toFixed(4)})`;
-                p.style.opacity = `${(1 - 0.34 * ad).toFixed(3)}`;
-
-                const img = p.querySelector<HTMLElement>(".project-image img");
-                if (img) img.style.translate = `${(d * 7).toFixed(2)}% 0`;
-
-                const info = p.querySelector<HTMLElement>(".project-info");
-                if (info) info.style.transform = `translate3d(${(d * 18).toFixed(1)}px, 0, 0)`;
+          const dist = () => Math.max(0, track.scrollWidth - vp.clientWidth);
+          const h = gsap.to(track, {
+            x: () => -dist(), ease: "none",
+            scrollTrigger: {
+              trigger: vp, pin: true, scrub: desktop ? true : 0.25, start: "top top",
+              end: () => "+=" + dist(), invalidateOnRefresh: true, anticipatePin: 1,
+              onUpdate: (self) => setProgress(self.progress),
+            },
+          });
+          panels.forEach((p, i) => {
+            const t = reveal(p);
+            const initialLimit = desktop ? 2 : 1;
+            if (i < initialLimit) ScrollTrigger.create({ trigger: vp, start: "top 74%", once: true, onEnter: () => t.play() });
+            else ScrollTrigger.create({ trigger: p, containerAnimation: h, start: "left 94%", once: true, onEnter: () => t.play() });
+            const img = p.querySelector("img");
+            if (img) {
+              gsap.fromTo(img, { scale: 1.3 }, {
+                scale: 1.04, ease: "none",
+                scrollTrigger: { trigger: p, containerAnimation: h, start: "left 100%", end: "left 35%", scrub: true },
               });
-
-              panels.forEach((p, idx) => {
-                p.classList.toggle("is-active", idx === best);
-                if (inView && idx === best) playPanel(idx);
-              });
-            };
-
-            const onTrackScroll = () => {
-              if (!rafId) rafId = window.requestAnimationFrame(updateSwipeDepth);
-            };
-            track.addEventListener("scroll", onTrackScroll, { passive: true });
-            updateSwipeDepth();
-            cleanups.push(() => {
-              track.removeEventListener("scroll", onTrackScroll);
-              if (rafId) window.cancelAnimationFrame(rafId);
-              panels.forEach((p) => {
-                p.style.transform = "";
-                p.style.opacity = "";
-                const img = p.querySelector<HTMLElement>(".project-image img");
-                if (img) img.style.translate = "";
-                const info = p.querySelector<HTMLElement>(".project-info");
-                if (info) info.style.transform = "";
-              });
-            });
-          }
+            }
+          });
+          setProgress(0);
         }
 
         /* ---------- SERVICES ---------- */

@@ -132,7 +132,7 @@ export default function Home() {
           <div className="project-progress" aria-hidden="true">
             <span className="project-count">01 / 04</span>
             <span className="project-progress-track"><span className="project-progress-bar" /></span>
-            <span className="project-hint"><span className="hint-desktop">KEEP SCROLLING →</span><span className="hint-mobile">SWIPE →</span></span>
+            <span className="project-hint"><span>KEEP SCROLLING →</span></span>
           </div>
         </div>
         <div className="portfolio-foot section-pad"><span>MORE STORIES IN THE MAKING</span><span>DVERSO STUDIO ©</span></div>
