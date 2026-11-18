@@ -28,7 +28,7 @@ button, input, textarea, select { font: inherit; }
 button, a, [role="button"] { touch-action: manipulation; }
 button, [role="button"], .menu-item, .service-row { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 ::selection { background: var(--champagne); color: var(--black); }
-main { overflow: clip; }
+.hero, .statement, .social-section, .services-section, .testimonial-section, .cta-section, .contact-section, .site-footer { overflow-x: clip; }
 .serif-italic, em { font-family: "Cormorant Garamond", serif; font-weight: 400; font-style: italic; }
 
 /* ============ Lenis ============ */

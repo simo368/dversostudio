@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { gsap, registerGsap, EASE, SplitText, getLenis, scrollToTarget } from "@/lib/motion";
+import { gsap, registerGsap, EASE, SplitText, getLenis, scrollToTarget, ScrollTrigger } from "@/lib/motion";
 
 const ITEMS = [
   { n: "01", label: "Home", href: "#top", img: "photo-1490481651871-ab68de25d43d" },
@@ -79,6 +79,7 @@ export default function SiteHeader() {
     setOpen(true);
     setArmed(true); // preview images are only requested once the menu is first opened
     getLenis()?.stop();
+    ScrollTrigger.normalizeScroll()?.disable();
     tl.current.timeScale(1).play();
   }, []);
 
@@ -89,6 +90,7 @@ export default function SiteHeader() {
     setActive(null);
     tl.current.timeScale(1.8).reverse(); // simultaneous + faster exit
     getLenis()?.start();
+    ScrollTrigger.normalizeScroll()?.enable();
   }, []);
 
   const handleItemClick = useCallback(

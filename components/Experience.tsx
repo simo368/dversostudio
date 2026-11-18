@@ -111,6 +111,12 @@ export default function Experience() {
 
         const cleanups: Array<() => void> = [];
 
+        /* ---------- Touch scroll normalization (syncs iOS Safari / Android touch scroll with ScrollTrigger pins & scrub) ---------- */
+        if (ScrollTrigger.isTouch) {
+          const norm = ScrollTrigger.normalizeScroll({ allowNestedScroll: true });
+          cleanups.push(() => norm?.kill());
+        }
+
         /* ---------- Lenis ↔ ScrollTrigger ---------- */
         const lenis = new Lenis({ duration: 1.15, smoothWheel: true, syncTouch: false });
         setLenis(lenis);
@@ -132,7 +138,7 @@ export default function Experience() {
         /* ---------- HERO: continuous exit + pointer/scroll depth ---------- */
         const heroExit = gsap.timeline({ scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true } });
         heroExit
-          .to(".hero-image", { yPercent: 8, scale: 1.03, ease: "none" }, 0)
+          .to(".hero-image", { yPercent: 10, ease: "none" }, 0)
           .to(".hero-content", { y: desktop ? -90 : -70, opacity: 0.1, ease: "none" }, 0)
           .to(".hero-index, .scroll-cue", { opacity: 0, ease: "none" }, 0);
         if (!desktop) heroExit.to(".hero-title", { scale: 0.92, ease: "none" }, 0);
